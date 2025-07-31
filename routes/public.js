@@ -107,10 +107,10 @@ router.post('/login', async (req, res) => {
     };
 
     // Generat JWT Secret Token
-    const tokenJwt = jwt.sign({id: user.id},JWT_SECRET, {expiresIn: '1m'});
+    const tokenJwtSecret = jwt.sign({id: user.id},JWT_SECRET, {expiresIn: '1m'});
 
     // return sucess message
-    return res.status(200).json(tokenJwt);
+    return res.status(200).json(tokenJwtSecret);
 
   } catch (error) {
     console.error("❌ [ERRO NO LOGIN] =>", error); //log
