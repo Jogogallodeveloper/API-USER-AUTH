@@ -1,11 +1,19 @@
 import express from "express";
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import jwt from "jsonwebtoken";
 
 // define the Prisma variable
 const prisma = new PrismaClient()
 
 const router = express.Router();
+
+// the terminal comand to generate a random JWT Secret Key
+//node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
+// define the JWT secret
+const JWT_SECRET = process.env.JWT_SECRET;
+
 
 // define  [POST] the public router
 router.post('/register', async (req, res) => {
@@ -83,26 +91,34 @@ router.post('/login', async (req, res) => {
     if (!existUser) {
       console.log("user not exists:", !existUser); // log
       console.warn(`user not found: ${user.email}`);
-      return res.status(200).json({ message: "User Not Found !" })
+      return res.status(400).json({ message: "User Not Found !" });
     };
 
-   // Get hashed password from DB
-   const hashFromDB = existUser.password;
+    // Get hashed password from DB
+    const hashFromDB = existUser.password;
 
-   // Compare plain text password from request with hash from DB
-   const validPassword = await bcrypt.compare(user.password, hashFromDB);
-   console.log("🔍 [PASSWORD VALIDATION] =>", validPassword);
+    // Compare plain text password from request with hash from DB
+    const validPassword = await bcrypt.compare(user.password, hashFromDB);
+    console.log("🔍 [PASSWORD VALIDATION] =>", validPassword);
 
-   if (!validPassword) {
-  return res.status(401).json({ message: "Invalid credentials" });
-}
-  return res.status(200).json({message: "Login Sucessfuly !! "})
+    //verify if the password match
+    if (!validPassword) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    };
+
+    // Generat JWT Secret Token
+    const tokenJwt = jwt.sign({id: user.id},JWT_SECRET, {expiresIn: '1m'});
+
+    // return sucess message
+    return res.status(200).json(tokenJwt);
+
   } catch (error) {
     console.error("❌ [ERRO NO LOGIN] =>", error); //log
     // in case of error define the error message
     res.status(500).json({ message: "Server Error to login, try again !" });
   }
 });
+
 
 //export the object
 export default router;
